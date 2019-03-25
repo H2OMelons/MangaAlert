@@ -1,5 +1,6 @@
 import boto3
 import sys
+import os
 
 dynamodb = boto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
 categories = [
@@ -187,8 +188,9 @@ def print_menu(menu_items):
 
 # Prints a 100 char width line of '-'
 def print_line_sep():
-  for i in range(100):
-    print('-', end = '')
+  (rows, cols) = os.popen('stty size', 'r').read().split()
+  for i in range(int(cols)):
+    print('-', end='')
   print()
 
 # Class to format the text printed onto the terminal
