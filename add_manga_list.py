@@ -35,14 +35,15 @@ FINISH = 5
 
 def main():
   manga_list = []
-  print_menu(main_menu)
 
   # Continue looping until user chooses 'Finish' option
   user_input = -1
   while user_input != FINISH:
+    print_line_sep()
+    print_menu(main_menu)
     user_input = input(ASK_FOR_INPUT)
     user_input = validate_menu_selection(user_input, range(1, len(main_menu) + 1))
-    if user_input != None:
+    if user_input != None and user_input != FINISH:
       # If user input isn't valid, print an error
       if user_input == ADD:
         add_manga(manga_list)
