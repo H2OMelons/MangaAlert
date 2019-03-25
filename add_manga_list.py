@@ -53,6 +53,8 @@ def main():
         add_manga(manga_list)
       elif user_input == VIEW:
         view_manga_list(manga_list)
+      elif user_input == EDIT:
+        edit_manga_list(manga_list)
     except:
       errors.print_error(errors.NOT_NUM)
 
@@ -95,6 +97,75 @@ def view_manga_list(manga_list):
     for category in manga:
       print(category + ': '  + str(manga[category]))
   print_line_sep()
+
+def edit_manga_list(manga_list):
+  # Get a list of all the manga names that the user has added so far
+  manga_names = [manga[categories[0]] for manga in manga_list]
+  manga_names.append('Finish Editing')
+  # Print a list of all the manga names
+  manga_selection = -1
+  # Keep asking for user input if user doesn't enter the index for 'Finish Editing'
+  while manga_selection != len(manga_names):
+    # Ask the user to enter the index of the manga that they want to edit
+    print_menu(manga_names)
+    manga_selection = input('Enter the number corresponding to the manga you want to edit: ')
+    manga_selection = validate_menu_selection(manga_selection, range(1, len(manga_names) + 1))
+    if manga_selection != None and manga_selection != len(manga_names):
+      manga_selection -= 1
+      category_selection = -1
+      # List of manga info where each item is a string 'category: info'
+      manga_info = [categories[i] + ': ' + str(manga_list[manga_selection - 1][categories[i]]) for i in range(len(categories))]
+      manga_info.append('Go Back')
+      while category_selection != len(manga_info):
+        print_menu(manga_info)
+        category_selection = input('Enter the number corresponding to what you want to edit: ')
+        category_selection = validate_menu_selection(category_selection, range(1, len(manga_info) + 1))
+        if category_selection != None and category_selection != len(manga_info):
+          # Subtract one because indexing starts at one in the printed menu, but starts at 0 in arrays
+          category_selection -= 1
+          category_info = input(prompts[category_selection])
+          category_info = validate_info_input(category_info, category_selection)
+          if category_info != None:
+            # Update manga_list to have the current info
+            manga_list[manga_selection][categories[category_selection]] = category_info
+            # Update manga info list for correct category selection menu
+            manga_info[category_selection] = categories[category_selection] + ': ' + str(category_info)
+            # If the user chose to update the name of the manga, also update the list containing
+            # all the manga names that make up the selection menu for editing
+            if category_selection == 0:
+              manga_names[manga_selection] = category_info
+
+# Validates the (numeric) menu selection by trying to convert the
+# given selection parameter into an int and checking if it is
+# in the given range. If it doesn't satisfy both conditions, then an
+# errors is printed and NONE is returned, otherwise, the selection casted
+# into an int is returned
+def validate_menu_selection(selection, selection_range):
+  try:
+    selection = int(selection)
+    if selection not in selection_range:
+      errors.print_error(errors.INV_SEL)
+      selection = None
+  except ValueError:
+    errors.print_error(errors.NOT_NUM)
+    selection = None
+  return selection
+
+def validate_info_input(info, category_index):
+  if category_types[category_index] == int:
+    try:
+      info = int(info)
+      # If the category is the update day, make sure its within range of -1 to 6
+      if category_index == 2 or category_index == 3:
+        if info not in range(-1, 7):
+          errors.print_error(errors.INV_SEL)
+          info = None
+    except ValueError:
+      errors.print_error(errors.NOT_NUM)
+      info = None
+  elif categories[category_index] == list:
+    info = info.split(',')
+  return info
 
 # Prints a menu on the terminal with the given menu items, with each
 # item given an index in the order as in menu_items
