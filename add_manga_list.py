@@ -50,6 +50,8 @@ def main():
         view_manga_list(manga_list)
       elif user_input == EDIT:
         edit_manga_list(manga_list)
+      elif user_input == DELETE:
+        delete_from_manga_list(manga_list)
 
 # Function performs asks user for info about the manga they want to add
 # to the list
@@ -111,6 +113,30 @@ def edit_manga_list(manga_list):
             # all the manga names that make up the selection menu for editing
             if category_selection == 0:
               manga_names[manga_selection] = category_info
+
+def delete_from_manga_list(manga_list):
+  # Get a list of all the manga names that the user has added to the list
+  manga_names = [manga[categories[0]] for manga in manga_list]
+  manga_names.append("Go Back")
+  # Print them all as a menu
+  manga_selection = -1
+  while manga_selection != len(manga_names):
+    print_menu(manga_names)
+    manga_selection = input('Enter the number corresponding to the manga you want to delete: ')
+    manga_selection = validate_menu_selection(manga_selection, range(1, len(manga_names) + 1))
+    # If user chooses 'Go Back' don't do anything
+    if manga_selection == len(manga_names):
+      continue
+    if manga_selection != None:
+      manga_selection -= 1
+      confirmation = input('Are you sure you want to delete ' + manga_names[manga_selection] + ' (Y/N): ')
+      confirmation = confirmation.lower()
+      if confirmation == 'y' or confirmation == 'yes':
+        # Remove the manga from the list of mangas and the list of manga names
+        manga_list.pop(manga_selection)
+        manga_names.pop(manga_selection)
+        success.print_success(success.DELETE)
+
 
 # Validates the (numeric) menu selection by trying to convert the
 # given selection parameter into an int and checking if it is
@@ -177,6 +203,12 @@ class errors:
 
   def print_error(error):
     print(terminal_colors.RED + error + terminal_colors.END)
+
+class success:
+  DELETE = "Manga was successfully deleted"
+
+  def print_success(success):
+    print(terminal_colors.GREEN + success + terminal_colors.END)
 
 if __name__ == '__main__':
   main()
