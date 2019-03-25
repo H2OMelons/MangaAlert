@@ -51,6 +51,8 @@ def main():
         errors.print_error(errors.INV_SEL)
       elif user_input == ADD:
         add_manga(manga_list)
+      elif user_input == VIEW:
+        view_manga_list(manga_list)
     except:
       errors.print_error(errors.NOT_NUM)
 
@@ -85,6 +87,15 @@ def add_manga(manga_list):
     i += 1
   manga_list.append(manga_info)
 
+# Prints out all the mangas and the related info that the user has added
+# to the list in the current session to the terminal
+def view_manga_list(manga_list):
+  for manga in manga_list:
+    print_line_sep()
+    for category in manga:
+      print(category + ': '  + str(manga[category]))
+  print_line_sep()
+
 # Prints a menu on the terminal with the given menu items, with each
 # item given an index in the order as in menu_items
 #
@@ -94,6 +105,12 @@ def add_manga(manga_list):
 def print_menu(menu_items):
   for i in range(len(menu_items)):
     print(str(i + 1) + '. ' + menu_items[i])
+
+# Prints a 100 char width line of '-'
+def print_line_sep():
+  for i in range(100):
+    print('-', end = '')
+  print()
 
 # Class to format the text printed onto the terminal
 class terminal_colors:
