@@ -60,26 +60,10 @@ def add_manga(manga_list):
   while i < len(categories):
     # Get the info for the category from the user
     manga_info[categories[i]] = input(prompts[i])
-    # If the category requires a number input, check to make sure the user
-    # entered a number
-    if category_types[i] == int:
-      try:
-        manga_info[categories[i]] = int(manga_info[categories[i]])
-        # If the user enters something not between -1 and 6 for the upload
-        # day then print an error and decrement the counter
-        if i in upload_range and manga_info[categories[i]] not in range(-1, 7):
-          errors.print_error(errors.INV_SEL)
-          i -= 1
-      except:
-        # If the input was not a number, then print an error and decrement
-        # the counter
-        errors.print_error(errors.NOT_NUM)
-        i -= 1
-    # If the category requires a list, convert the comma separated
-    # string into a list
-    if category_types[i] == list:
-      manga_info[categories[i]] = manga_info[categories[i]].split(',')
-    i += 1
+    manga_info[categories[i]] = validate_info_input(manga_info[categories[i]], i)
+
+    if manga_info[categories[i]] != None:
+      i += 1
   manga_list.append(manga_info)
 
 # Prints out all the mangas and the related info that the user has added
@@ -144,6 +128,10 @@ def validate_menu_selection(selection, selection_range):
     selection = None
   return selection
 
+# Validates the info that the user enters for a category
+# If the category requires an int, checks that input is a number and makes sure
+# it is in the right range
+# If category requires a list, turns comma separated string into a list
 def validate_info_input(info, category_index):
   if category_types[category_index] == int:
     try:
@@ -156,7 +144,7 @@ def validate_info_input(info, category_index):
     except ValueError:
       errors.print_error(errors.NOT_NUM)
       info = None
-  elif categories[category_index] == list:
+  elif category_types[category_index] == list:
     info = info.split(',')
   return info
 
