@@ -77,7 +77,6 @@ def view_manga_list(manga_list):
     print_line_sep()
     for category in manga:
       print(category + ': '  + str(manga[category]))
-  print_line_sep()
 
 def edit_manga_list(manga_list):
   # Get a list of all the manga names that the user has added so far
