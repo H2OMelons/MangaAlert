@@ -41,22 +41,15 @@ def main():
   user_input = -1
   while user_input != FINISH:
     user_input = input(ASK_FOR_INPUT)
-    # Try to convert user input into an integer. If it doesn't work,
-    # print an error
-    try:
-      user_input = int(user_input)
-
+    user_input = validate_menu_selection(user_input, range(1, len(main_menu) + 1))
+    if user_input != None:
       # If user input isn't valid, print an error
-      if user_input <= 0 or user_input > FINISH:
-        errors.print_error(errors.INV_SEL)
-      elif user_input == ADD:
+      if user_input == ADD:
         add_manga(manga_list)
       elif user_input == VIEW:
         view_manga_list(manga_list)
       elif user_input == EDIT:
         edit_manga_list(manga_list)
-    except:
-      errors.print_error(errors.NOT_NUM)
 
 # Function performs asks user for info about the manga they want to add
 # to the list
