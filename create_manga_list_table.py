@@ -6,7 +6,7 @@ table = dynamodb.create_table(
   TableName = 'manga_list',
   KeySchema = [
     {
-      'AttributeName' : 'day_of_week',
+      'AttributeName' : 'poster',
       'KeyType' : 'HASH'
     },
     {
@@ -16,8 +16,8 @@ table = dynamodb.create_table(
   ],
   AttributeDefinitions = [
     {
-      'AttributeName' : 'day_of_week',
-      'AttributeType' : 'N'
+      'AttributeName' : 'poster',
+      'AttributeType' : 'S'
     },
     {
       'AttributeName' : 'manga_name',
