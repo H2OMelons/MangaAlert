@@ -6,20 +6,16 @@ dynamodb = boto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
 categories = [
   "Name",
   "User",
-  "Upload Day",
-  "Secondary Upload Day",
   "Most Recent Chapter",
   "Additional Filters"
 ]
 upload_range = range(2,4)
 category_types = [
-  str, str, int, int, int, list
+  str, str, int, list
 ]
 prompts = [
   "What is the name of the manga? ",
   "Who is the reddit user that posts the chapter? ",
-  "Su=0,M=1,Tu=2,W=3,Th=4,F=5,Sa=6,unsure=-1 \nWhat day of the week is the chapter most often posted? ",
-  "If it's not posted on the above day, what is the second most likely day? ",
   "What is the most recent chapter number? ",
   "Enter any additional filters separated by commas (Press enter if none): "
 ]
@@ -115,6 +111,8 @@ def edit_manga_list(manga_list):
             if category_selection == 0:
               manga_names[manga_selection] = category_info
 
+# Displays the names of all the mangas that the user currently has on the list and prompts
+# the user to choose one to delete
 def delete_from_manga_list(manga_list):
   # Get a list of all the manga names that the user has added to the list
   manga_names = [manga[categories[0]] for manga in manga_list]
@@ -137,7 +135,6 @@ def delete_from_manga_list(manga_list):
         manga_list.pop(manga_selection)
         manga_names.pop(manga_selection)
         success.print_success(success.DELETE)
-
 
 # Validates the (numeric) menu selection by trying to convert the
 # given selection parameter into an int and checking if it is
@@ -163,11 +160,6 @@ def validate_info_input(info, category_index):
   if category_types[category_index] == int:
     try:
       info = int(info)
-      # If the category is the update day, make sure its within range of -1 to 6
-      if category_index == 2 or category_index == 3:
-        if info not in range(-1, 7):
-          errors.print_error(errors.INV_SEL)
-          info = None
     except ValueError:
       errors.print_error(errors.NOT_NUM)
       info = None
