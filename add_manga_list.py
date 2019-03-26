@@ -37,7 +37,7 @@ def main():
   user_input = -1
   while user_input != FINISH:
     print_line_sep()
-    print_menu(main_menu)
+    print_menu(main_menu, True, terminal_colors.GREEN)
     user_input = input(ASK_FOR_INPUT)
     user_input = validate_menu_selection(user_input, range(1, len(main_menu) + 1))
     if user_input != None and user_input != FINISH:
@@ -77,13 +77,13 @@ def view_manga_list(manga_list):
 def edit_manga_list(manga_list):
   # Get a list of all the manga names that the user has added so far
   manga_names = [manga[categories[0]] for manga in manga_list]
-  manga_names.append('Finish Editing')
+  manga_names.append('Go Back')
   # Print a list of all the manga names
   manga_selection = -1
   # Keep asking for user input if user doesn't enter the index for 'Finish Editing'
   while manga_selection != len(manga_names):
     # Ask the user to enter the index of the manga that they want to edit
-    print_menu(manga_names)
+    print_menu(manga_names, True, terminal_colors.GREEN)
     manga_selection = input('Enter the number corresponding to the manga you want to edit: ')
     manga_selection = validate_menu_selection(manga_selection, range(1, len(manga_names) + 1))
     if manga_selection != None and manga_selection != len(manga_names):
@@ -93,7 +93,7 @@ def edit_manga_list(manga_list):
       manga_info = [categories[i] + ': ' + str(manga_list[manga_selection - 1][categories[i]]) for i in range(len(categories))]
       manga_info.append('Go Back')
       while category_selection != len(manga_info):
-        print_menu(manga_info)
+        print_menu(manga_info, True, terminal_colors.GREEN)
         category_selection = input('Enter the number corresponding to what you want to edit: ')
         category_selection = validate_menu_selection(category_selection, range(1, len(manga_info) + 1))
         if category_selection != None and category_selection != len(manga_info):
@@ -120,7 +120,7 @@ def delete_from_manga_list(manga_list):
   # Print them all as a menu
   manga_selection = -1
   while manga_selection != len(manga_names):
-    print_menu(manga_names)
+    print_menu(manga_names, True, terminal_colors.GREEN)
     manga_selection = input('Enter the number corresponding to the manga you want to delete: ')
     manga_selection = validate_menu_selection(manga_selection, range(1, len(manga_names) + 1))
     # If user chooses 'Go Back' don't do anything
@@ -173,9 +173,15 @@ def validate_info_input(info, category_index):
 # @param menu_items List of items that should be printed onto the
 #                   terminal. Will be printed in the same order
 #                   as they appear in the list.
-def print_menu(menu_items):
+# @param highlight_last If True, then the last item in the list will be
+#                       highlighted when printed
+# @param color The color of the hihglighted text
+def print_menu(menu_items, highlight_last, color):
   for i in range(len(menu_items)):
-    print(str(i + 1) + '. ' + menu_items[i])
+    if i == len(menu_items) - 1 and highlight_last:
+      print(color + str(i + 1) + '. ' + menu_items[i] + terminal_colors.END)
+    else:
+      print(str(i + 1) + '. ' + menu_items[i])
 
 # Prints a 100 char width line of '-'
 def print_line_sep():
