@@ -1,8 +1,9 @@
 import boto3
 import sys
 import os
+import asyncio
+import aioboto3
 
-dynamodb = boto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
 categories = [
   "Name",
   "User",
@@ -40,7 +41,7 @@ def main():
     print_menu(main_menu, True, terminal_colors.GREEN)
     user_input = input(ASK_FOR_INPUT)
     user_input = validate_menu_selection(user_input, range(1, len(main_menu) + 1))
-    if user_input != None and user_input != FINISH:
+    if user_input != None:
       # If user input isn't valid, print an error
       if user_input == ADD:
         add_manga(manga_list)
@@ -50,6 +51,8 @@ def main():
         edit_manga_list(manga_list)
       elif user_input == DELETE:
         delete_from_manga_list(manga_list)
+
+  return manga_list
 
 # Function performs asks user for info about the manga they want to add
 # to the list
@@ -136,6 +139,65 @@ def delete_from_manga_list(manga_list):
         manga_names.pop(manga_selection)
         success.print_success(success.DELETE)
 
+async def finish(manga_list):
+  if len(manga_list) == 0:
+    print('You didn\'t add any mangas. Ending program...')
+  else:
+
+    dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
+    #table = dynamo_resource.Table('manga_list')
+
+    print('Preparing to insert into dynamodb...')
+    # List of all batch write requests (each batch request is a list of at most 25 items)
+    batch_write_list = []
+    # List of items to write. Max length of 25 (dynamodb limit)
+    batch_write_buffer = []
+    for i in range(len(manga_list)):
+      item = {}
+      item['manga_name'] = manga_list[i][categories[0]]#{'S' : manga_list[i][categories[0]]}
+      item['poster'] = manga_list[i][categories[1]]#{'S' : manga_list[i][categories[1]]}
+      item['most_recent_chapter'] = manga_list[i][categories[2]]#{'N' : manga_list[i][categories[2]]}
+      additional_filters = manga_list[i][categories[3]]
+      if len(additional_filters) != 0:
+        #filters = [{'S' : fil} for fil in manga_list[i][categories[3]]]
+        item['additional_filters'] = additional_filters#{'L' : filters}
+      item['ended'] = False #{'BOOL' : False}
+      batch_write_buffer.append({'PutRequest' : {'Item' : item}})
+      if len(batch_write_buffer) == 25:
+        batch_write_list.append(batch_write_buffer)
+        batch_write_buffer = []
+
+    # If buffer is not empty, then add it to the list of requests
+    if len(batch_write_buffer) != 0:
+      batch_write_list.append(batch_write_buffer)
+      batch_write_buffer = []
+
+
+    # Write all the mangas in the list to dynamodb in batches of at most 25
+    for batch in batch_write_list:
+      response = await dynamodb.batch_write_item(RequestItems={'manga_list' : batch})
+      unprocessed_items = response['UnprocessedItems']
+
+      # Print all the mangas that were successfully added
+      for put_request in batch:
+        if not bool(unprocessed_items) or put_request not in unprocessed_items['manga_list']:
+          success.print_success(put_request['PutRequest']['Item']['manga_name'] + success.ADD)
+
+      # While there are still items not successfully inserted into dynamodb, sleep for 3 seconds then reattempt
+      while len(unprocessed_items) > 0:
+        errors.print_error(str(len(unprocessed_items)) + ' unsuccessfully added. Retrying in 3 seconds...')
+        await asyncio.sleep(3)
+        response = await dynamodb.batch_write_item(RequestItems=unprocessed_items)
+        # Print all the mangas that were successfully added
+        for put_request in unprocessed_items['manga_list']:
+          if put_request not in response['UnprocessedItems']['manga_list']:
+            success.print_success(put_request['PutRequest']['Item']['manga_name'] + success.ADD)
+        unprocessed_items = response['UnprocessedItems']
+
+    # Close the dynamodb connection
+    await dynamodb.close()
+    success.print_success("All mangas successfully added. Ending Program...")
+
 # Validates the (numeric) menu selection by trying to convert the
 # given selection parameter into an int and checking if it is
 # in the given range. If it doesn't satisfy both conditions, then an
@@ -164,7 +226,10 @@ def validate_info_input(info, category_index):
       errors.print_error(errors.NOT_NUM)
       info = None
   elif category_types[category_index] == list:
-    info = info.split(',')
+    if info != '':
+      info = info.split(',')
+    else:
+      info = []
   return info
 
 # Prints a menu on the terminal with the given menu items, with each
@@ -206,9 +271,12 @@ class errors:
 
 class success:
   DELETE = "Manga was successfully deleted"
+  ADD = " was successfully added"
 
   def print_success(success):
     print(terminal_colors.GREEN + success + terminal_colors.END)
 
 if __name__ == '__main__':
-  main()
+  manga_list = main()
+  loop = asyncio.get_event_loop()
+  loop.run_until_complete(finish(manga_list))
