@@ -10,9 +10,12 @@ category_types = [
 ]
 
 dynamodb_attributes = [
-  'manga_name',
-  'poster',
-  'most_recent_chapter',
-  'additional_filters',
-  'ended'
+  {'key' : 'manga_name', 'type' : 'S'},
+  {'key' : 'poster', 'type' : 'S'},
+  {'key' : 'most_recent_chapter', 'type' : 'N'},
+  {'key' : 'additional_filters', 'type' : 'L'},
+  {'key' : 'ended', 'type' : 'BOOL'}
 ]
+
+DB_HASH_KEY = 0
+DB_RANGE_KEY = 1
