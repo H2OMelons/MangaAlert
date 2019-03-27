@@ -40,10 +40,6 @@ async def main():
       if len(mangas) > 0:
         print('Retrieved ' + str(len(mangas)) + ' matches...')
         # Prompt user to choose one
-        #manga_names = [manga for manga in mangas]
-        #manga_names.append('Go Back')
-        #print(manga_names)
-        #print_menu(str(manga_names), True, terminal_colors.GREEN)
         for i in range(len(mangas)):
           print_line_sep()
           for att in constants.dynamodb_attributes:
