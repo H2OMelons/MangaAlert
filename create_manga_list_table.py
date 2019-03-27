@@ -6,21 +6,21 @@ table = dynamodb.create_table(
   TableName = 'manga_list',
   KeySchema = [
     {
-      'AttributeName' : 'poster',
+      'AttributeName' : 'manga_name',
       'KeyType' : 'HASH'
     },
     {
-      'AttributeName' : 'manga_name',
+      'AttributeName' : 'poster',
       'KeyType' : 'RANGE'
     }
   ],
   AttributeDefinitions = [
     {
-      'AttributeName' : 'poster',
+      'AttributeName' : 'manga_name',
       'AttributeType' : 'S'
     },
     {
-      'AttributeName' : 'manga_name',
+      'AttributeName' : 'poster',
       'AttributeType' : 'S'
     }
   ],
