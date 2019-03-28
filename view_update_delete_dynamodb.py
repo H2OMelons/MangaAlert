@@ -25,20 +25,11 @@ async def main():
       # Display all the matches
       if len(mangas) > 0:
         print('Retrieved ' + str(len(mangas)) + ' matches...')
-        # Prompt user to choose one
-        for i in range(len(mangas)):
-          print_line_sep()
-          for att in constants.dynamodb_attributes:
-            if mangas[i].get(att['key']):
-              # If the attribute is the name, then add bolding and an index
-              if att == constants.dynamodb_attributes[0]:
-                print(str(i + 1) + '. ' + terminal_colors.BOLD + mangas[i].get(att['key'])[att['type']] + terminal_colors.END)
-              else:
-                print('\t' + att['key'] + ': ' + str(mangas[i].get(att['key'])[att['type']]))
-        print_line_sep()
+        # Print all the mangas that match the name the user searched for
+        print_manga_info(mangas)
+        # Print the 'Go Back' option
         print(str(len(mangas) + 1) + '. '+  terminal_colors.GREEN + 'Go Back' + terminal_colors.END)
         print_line_sep()
-
         # Keep asking for user selection until they enter a valid selection
         delete_selection = None
         while delete_selection == None:
@@ -46,6 +37,7 @@ async def main():
           delete_selection = validate_menu_selection(delete_selection, range(1, len(mangas) + 2))
 
         # If the user chose a manga, then delete it
+        # len(mangas) + 1 is the 'Go Back' option. If it's chosen, don't do anything
         if delete_selection != len(mangas) + 1:
           delete_selection -= 1
           print('Deleting ' + mangas[delete_selection]['manga_name']['S'] + ' ...')
@@ -72,6 +64,7 @@ async def main():
 
   await dynamodb.close()
 
+# Given a manga name, query dynamodb for all entries that has the same name and return them
 async def query_for_name(manga_name):
   response = await dynamodb.query(
     ExpressionAttributeValues = {':m' : {'S' : manga_name}},
@@ -90,6 +83,19 @@ async def query_for_name(manga_name):
     mangas.extend(response['Items'])
 
   return mangas
+
+# Given a list of mangas retrieved from dynamodb, print all entries onto the terminal
+def print_manga_info(mangas):
+  for i in range(len(mangas)):
+    print_line_sep()
+    for att in constants.dynamodb_attributes:
+      if mangas[i].get(att['key']):
+        # If the attribute is the name, then add bolding and an index
+        if att == constants.dynamodb_attributes[0]:
+          print(str(i + 1) + '. ' + terminal_colors.BOLD + mangas[i].get(att['key'])[att['type']] + terminal_colors.END)
+        else:
+          print('\t' + att['key'] + ': ' + str(mangas[i].get(att['key'])[att['type']]))
+  print_line_sep()
 
 
 if __name__ == '__main__':
