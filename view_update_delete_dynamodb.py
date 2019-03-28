@@ -21,21 +21,7 @@ async def main():
       manga_name = input("Enter the name of the manga you want to delete (-1 to exit): ")
       print('Retrieving info...')
       # Query dyamodb for all entries that match the manga name
-      response = await dynamodb.query(
-        ExpressionAttributeValues = {':m' : {'S' : manga_name}},
-        KeyConditionExpression = 'manga_name = :m',
-        TableName = 'manga_list'
-      )
-      mangas = response['Items']
-
-      while response.get('LastEvaluatedKey'):
-        response = await dynamodb.query(
-          ExpressionAttributeValues = {':m' : {'S' : manga_name}},
-          KeyConditionExpression = 'manga_name = :m',
-          TableName = 'manga_list',
-          ExclusiveStartKey = response['LastKeyEvaluated']
-        )
-        mangas.extend(response['Items'])
+      mangas = await query_for_name(manga_name)
       # Display all the matches
       if len(mangas) > 0:
         print('Retrieved ' + str(len(mangas)) + ' matches...')
@@ -85,6 +71,25 @@ async def main():
         errors.print_error('There are no mangas matching that name in the database')
 
   await dynamodb.close()
+
+async def query_for_name(manga_name):
+  response = await dynamodb.query(
+    ExpressionAttributeValues = {':m' : {'S' : manga_name}},
+    KeyConditionExpression = 'manga_name = :m',
+    TableName = 'manga_list'
+  )
+  mangas = response['Items']
+
+  while response.get('LastEvaluatedKey'):
+    response = await dynamodb.query(
+      ExpressionAttributeValues = {':m' : {'S' : manga_name}},
+      KeyConditionExpression = 'manga_name = :m',
+      TableName = 'manga_list',
+      ExclusiveStartKey = response['LastKeyEvaluated']
+    )
+    mangas.extend(response['Items'])
+
+  return mangas
 
 
 if __name__ == '__main__':
