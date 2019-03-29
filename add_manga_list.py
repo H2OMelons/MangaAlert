@@ -2,6 +2,7 @@ import boto3
 import sys
 import asyncio
 import aioboto3
+import constants
 from utilities import print_menu, errors, success, terminal_colors
 from utilities import print_line_sep, validate_menu_selection, validate_info_input
 from constants import categories
@@ -138,7 +139,6 @@ async def finish(manga_list):
   else:
 
     dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
-    #table = dynamo_resource.Table('manga_list')
 
     print('Preparing to insert into dynamodb...')
     # List of all batch write requests (each batch request is a list of at most 25 items)
@@ -147,14 +147,13 @@ async def finish(manga_list):
     batch_write_buffer = []
     for i in range(len(manga_list)):
       item = {}
-      item['manga_name'] = manga_list[i][categories[0]]#{'S' : manga_list[i][categories[0]]}
-      item['poster'] = manga_list[i][categories[1]]#{'S' : manga_list[i][categories[1]]}
-      item['most_recent_chapter'] = manga_list[i][categories[2]]#{'N' : manga_list[i][categories[2]]}
+      item['manga_name'] = manga_list[i][categories[0]]
+      item['poster'] = manga_list[i][categories[1]]
+      item['most_recent_chapter'] = manga_list[i][categories[2]]
       additional_filters = manga_list[i][categories[3]]
       if len(additional_filters) != 0:
-        #filters = [{'S' : fil} for fil in manga_list[i][categories[3]]]
-        item['additional_filters'] = additional_filters#{'L' : filters}
-      item['ended'] = False #{'BOOL' : False}
+        item['additional_filters'] = additional_filters
+      item['ended'] = False
       batch_write_buffer.append({'PutRequest' : {'Item' : item}})
       if len(batch_write_buffer) == 25:
         batch_write_list.append(batch_write_buffer)
@@ -168,12 +167,12 @@ async def finish(manga_list):
 
     # Write all the mangas in the list to dynamodb in batches of at most 25
     for batch in batch_write_list:
-      response = await dynamodb.batch_write_item(RequestItems={'manga_list' : batch})
+      response = await dynamodb.batch_write_item(RequestItems={constants.TABLE_NAME : batch})
       unprocessed_items = response['UnprocessedItems']
 
       # Print all the mangas that were successfully added
       for put_request in batch:
-        if not bool(unprocessed_items) or put_request not in unprocessed_items['manga_list']:
+        if not bool(unprocessed_items) or put_request not in unprocessed_items[constants.TABLE_NAME]:
           success.print_success(put_request['PutRequest']['Item']['manga_name'] + success.ADD)
 
       # While there are still items not successfully inserted into dynamodb, sleep for 3 seconds then reattempt
@@ -182,8 +181,8 @@ async def finish(manga_list):
         await asyncio.sleep(3)
         response = await dynamodb.batch_write_item(RequestItems=unprocessed_items)
         # Print all the mangas that were successfully added
-        for put_request in unprocessed_items['manga_list']:
-          if put_request not in response['UnprocessedItems']['manga_list']:
+        for put_request in unprocessed_items[constants.TABLE_NAME]:
+          if put_request not in response['UnprocessedItems'][constants.TABLE_NAME]:
             success.print_success(put_request['PutRequest']['Item']['manga_name'] + success.ADD)
         unprocessed_items = response['UnprocessedItems']
 

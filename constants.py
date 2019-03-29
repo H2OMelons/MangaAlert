@@ -1,3 +1,5 @@
+TABLE_NAME = 'manga_list'
+
 categories = [
   "Name",
   "User",

@@ -17,14 +17,14 @@ async def main():
     if menu_selection == 1:
       # Get the total number of items in dynamodb db
       response = await dynamodb.scan(
-        TableName = 'manga_list',
+        TableName = constants.TABLE_NAME,
         Select = 'COUNT'
       )
       num_items = response['Count']
       limit = 10
       # Scan for the first 10 items
       response = await dynamodb.scan(
-        TableName = 'manga_list',
+        TableName = constants.TABLE_NAME,
         Limit = limit
       )
       mangas = response['Items']
@@ -41,7 +41,7 @@ async def main():
         if menu_selection == 1:
           load_more = True
           response = await dynamodb.scan(
-            TableName = 'manga_list',
+            TableName = constants.TABLE_NAME,
             Limit = limit,
             ExclusiveStartKey = response['LastEvaluatedKey']
           )
@@ -138,7 +138,7 @@ async def main():
                 # to delete the old entry before inserting the new one
                 response = await delete_from_db(dynamodb, old_key)
                 response = await dynamodb.put_item(
-                  TableName = 'manga_list',
+                  TableName = constants.TABLE_NAME,
                   Item = mangas[selection]
                 )
               # If the user didn't change the manga name or poster, can simply update
@@ -164,7 +164,7 @@ async def main():
                 print(expression_att_values)
                 print(expression_att_names)
                 response = await dynamodb.update_item(
-                  TableName = 'manga_list',
+                  TableName = constants.TABLE_NAME,
                   Key = generate_db_key(mangas[selection]),
                   ExpressionAttributeNames = expression_att_names,
                   ExpressionAttributeValues = expression_att_values,
@@ -189,7 +189,7 @@ async def query_for_name(dynamodb, manga_name):
   response = await dynamodb.query(
     ExpressionAttributeValues = {':m' : {'S' : manga_name}},
     KeyConditionExpression = 'manga_name = :m',
-    TableName = 'manga_list'
+    TableName = constants.TABLE_NAME
   )
   mangas = response['Items']
 
@@ -197,7 +197,7 @@ async def query_for_name(dynamodb, manga_name):
     response = await dynamodb.query(
       ExpressionAttributeValues = {':m' : {'S' : manga_name}},
       KeyConditionExpression = 'manga_name = :m',
-      TableName = 'manga_list',
+      TableName = constants.TABLE_NAME,
       ExclusiveStartKey = response['LastKeyEvaluated']
     )
     mangas.extend(response['Items'])
@@ -207,7 +207,7 @@ async def query_for_name(dynamodb, manga_name):
 async def delete_from_db(dynamodb, key):
   response = await dynamodb.delete_item(
     Key = key,
-    TableName = 'manga_list'
+    TableName = constants.TABLE_NAME
   )
 
 def generate_db_key(manga):
