@@ -41,9 +41,15 @@ class success:
     print(terminal_colors.GREEN + success + terminal_colors.END)
   END = '\033[0m'
 
+# Returns a tuple where the first item is the number of rows and the
+# second item is the number of columns of the terminal
+def get_terminal_dim():
+  (rows, cols) = os.popen('stty size', 'r').read().split()
+  return (rows, cols)
+
 # Prints a 100 char width line of '-'
 def print_line_sep():
-  (rows, cols) = os.popen('stty size', 'r').read().split()
+  cols = get_terminal_dim()[1]
   for i in range(int(cols)):
     print('-', end='')
   print()
