@@ -230,6 +230,11 @@ def print_manga_info(mangas):
         # If the attribute is the name, then add bolding and an index
         if att == constants.dynamodb_attributes[0]:
           print(str(i + 1) + '. ' + terminal_colors.BOLD + mangas[i].get(att['key'])[att['type']] + terminal_colors.END)
+        # The additional filters list is a list of dictionaries. Turn it into a list of the values of the dictionaries
+        # [{'S':'1'},{'S':'2'}] -> ['1', '2']
+        elif att['type'] == 'L':
+          arr = [item['S'] for item in mangas[i].get(att['key']).get(att['type'])]
+          print('\t' + att['key'] + ': ' + str(arr))
         else:
           print('\t' + att['key'] + ': ' + str(mangas[i].get(att['key'])[att['type']]))
   print_line_sep()
