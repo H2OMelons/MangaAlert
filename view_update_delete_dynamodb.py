@@ -4,6 +4,7 @@ import aioboto3
 import constants
 from utilities import validate_menu_selection, print_menu, terminal_colors
 from utilities import print_line_sep, errors, success, get_terminal_dim
+from utilities import validate_info_input
 
 async def main():
   selections = ["View", "Edit", "Delete", "Finish"]
@@ -51,13 +52,17 @@ async def main():
         elif menu_selection == 2:
           load_more = False
 
-    elif menu_selection == 2:
-      manga_name = input("Enter the name of the manga you want to edit (-1 to exit): ")
-    elif menu_selection == 3:
-      manga_name = input("Enter the name of the manga you want to delete (-1 to exit): ")
+    elif menu_selection == 2 or menu_selection == 3:
+      manga_name = ''
+      if menu_selection == 2:
+        manga_name = input("Enter the name of the manga you want to edit (-1 to exit): ")
+      elif menu_selection == 3:
+        manga_name = input("Enter the name of the manga you want to delete (-1 to exit): ")
+      if manga_name == '-1':
+        continue
       print('Retrieving info...')
       # Query dyamodb for all entries that match the manga name
-      mangas = await query_for_name(manga_name)
+      mangas = await query_for_name(dynamodb, manga_name)
       # Display all the matches
       if len(mangas) > 0:
         print('Retrieved ' + str(len(mangas)) + ' matches...')
@@ -66,33 +71,112 @@ async def main():
         # Print the 'Go Back' option
         print(str(len(mangas) + 1) + '. '+  terminal_colors.GREEN + 'Go Back' + terminal_colors.END)
         print_line_sep()
+        # menu selection 2 is for editing while 3 is for deleting
+        prompt = ''
+        if menu_selection == 2:
+          prompt = 'Select the manga you want to edit (Enter a number): '
+        elif menu_selection == 3:
+          prompt = 'Select the manga you want to delete (Enter a number): '
         # Keep asking for user selection until they enter a valid selection
-        delete_selection = None
-        while delete_selection == None:
-          delete_selection = input('Select the manga you want to delete (Enter a number): ')
-          delete_selection = validate_menu_selection(delete_selection, range(1, len(mangas) + 2))
+        selection = None
+        while selection == None:
+          selection = input(prompt)
+          selection = validate_menu_selection(selection, range(1, len(mangas) + 2))
 
         # If the user chose a manga, then delete it
         # len(mangas) + 1 is the 'Go Back' option. If it's chosen, don't do anything
-        if delete_selection != len(mangas) + 1:
-          delete_selection -= 1
-          print('Deleting ' + mangas[delete_selection]['manga_name']['S'] + ' ...')
-          hash_key = constants.dynamodb_attributes[constants.DB_HASH_KEY]['key']
-          hash_type = constants.dynamodb_attributes[constants.DB_HASH_KEY]['type']
-          range_key = constants.dynamodb_attributes[constants.DB_RANGE_KEY]['key']
-          range_type = constants.dynamodb_attributes[constants.DB_RANGE_KEY]['type']
-          response = await dynamodb.delete_item(
-            Key={
-              hash_key : {
-                hash_type: mangas[delete_selection][hash_key][hash_type]
-              },
-              range_key : {
-                range_type : mangas[delete_selection][range_key][range_type]
-              }
-            },
-            TableName = 'manga_list'
-          )
-          success.print_success('Successfuly deleted ' + mangas[delete_selection][hash_key][hash_type])
+        if selection != len(mangas) + 1:
+          selection -= 1
+          # Keep a copy of the old key before it is updated in case we need to delete
+          # the related entry from dynamodb
+          old_key = generate_db_key(mangas[selection])
+          if menu_selection == 2:
+            menu_items = [att['key'] for att in constants.dynamodb_attributes]
+            menu_items.append('Finish')
+            print_menu(menu_items, True, terminal_colors.GREEN)
+            edit_selection = None
+            changes = []
+            # Keep asking the user for input as long as they don't select 'Finish'
+            # or as long as they keep entering invalid input
+            while edit_selection == None or edit_selection != len(menu_items):
+              edit_selection = input('What would you like to edit (Enter a number): ')
+              edit_selection = validate_menu_selection(edit_selection, range(1, len(menu_items) + 1))
+              # If the user input was valid and was not the 'Finish' selection, update the
+              # corresponding value if necessary
+              if edit_selection != None and edit_selection != len(menu_items):
+                edit_selection -= 1
+
+                # Keep asking user for manga info until they enter a valid input
+                edit_input = None
+                while edit_input == None:
+                  edit_input = input(constants.prompts[edit_selection])
+                  edit_input = validate_info_input(edit_input, edit_selection)
+
+                # The current value of the category that the user is editing
+                hash_key = constants.dynamodb_attributes[edit_selection]['key']
+                hash_type = constants.dynamodb_attributes[edit_selection]['type']
+                current_val = mangas[selection].get(hash_key)
+
+                if current_val != None:
+                  current_val = current_val.get(hash_type)
+
+                # Only apply the new value if it's necessary and if it's new
+                if edit_input != None and current_val != edit_input:
+                  # boto3 requires that all int values be stringified
+                  if type(edit_input) == int:
+                    edit_input = str(edit_input)
+                  mangas[selection][hash_key] = {hash_type : edit_input}
+                  changes.append(edit_selection)
+
+            if len(changes) > 0:
+              # If the user decided to change the manga name or the poster name, we need
+              # to delete the item from dynamodb and put in a new item
+              # (can't update the hash/range key in dynamodb)
+              if constants.DB_HASH_KEY_INDEX in changes or constants.DB_RANGE_KEY_INDEX in changes:
+                # Delete using `old_key` because the corresponding values in the mangas list was
+                # overwritten with the new user inputted value. We need the old key to be able
+                # to delete the old entry before inserting the new one
+                response = await delete_from_db(dynamodb, old_key)
+                response = await dynamodb.put_item(
+                  TableName = 'manga_list',
+                  Item = mangas[selection]
+                )
+              # If the user didn't change the manga name or poster, can simply update
+              # the item
+              else:
+                # Create a dictionary where the keys are the dynamodb att and the values are the new
+                # corresponding values that the user edited
+                expression_att_values = {}
+                expression_att_names = {}
+                update_expression = 'SET '
+                for change in changes:
+                  expression_att_names['#' + str(change)] = constants.dynamodb_attributes[change]['key']
+                  value = mangas[selection][constants.dynamodb_attributes[change]['key']][constants.dynamodb_attributes[change]['type']]
+                  if type(value) == list:
+                    value = [{'S' : val} for val in value]
+                  expression_att_values[':' + str(change)] = {
+                    constants.dynamodb_attributes[change]['type'] : value
+                  }
+                  if update_expression != 'SET ':
+                    update_expression += ','
+                  update_expression += ' #' + str(change) + ' = :' + str(change)
+                # Create an api call to update the item
+                print(expression_att_values)
+                print(expression_att_names)
+                response = await dynamodb.update_item(
+                  TableName = 'manga_list',
+                  Key = generate_db_key(mangas[selection]),
+                  ExpressionAttributeNames = expression_att_names,
+                  ExpressionAttributeValues = expression_att_values,
+                  UpdateExpression = update_expression
+                )
+              success.print_success('Successfully edited ' + mangas[selection][constants.DB_HASH_KEY][constants.DB_HASH_TYPE])
+            else:
+              success.print_success('No changes detected...')
+          elif menu_selection == 3:
+            print('Deleting ' + mangas[selection]['manga_name']['S'] + ' ...')
+            response = await delete_from_db(dynamodb, generate_db_key(mangas[selection]))
+            success.print_success('Successfuly deleted ' + mangas[selection][constants.DB_HASH_KEY][constants.DB_HASH_TYPE])
 
       # If there are none, print that there are no matches
       else:
@@ -101,7 +185,7 @@ async def main():
   await dynamodb.close()
 
 # Given a manga name, query dynamodb for all entries that has the same name and return them
-async def query_for_name(manga_name):
+async def query_for_name(dynamodb, manga_name):
   response = await dynamodb.query(
     ExpressionAttributeValues = {':m' : {'S' : manga_name}},
     KeyConditionExpression = 'manga_name = :m',
@@ -119,6 +203,23 @@ async def query_for_name(manga_name):
     mangas.extend(response['Items'])
 
   return mangas
+
+async def delete_from_db(dynamodb, key):
+  response = await dynamodb.delete_item(
+    Key = key,
+    TableName = 'manga_list'
+  )
+
+def generate_db_key(manga):
+  key = {
+    constants.DB_HASH_KEY : {
+      constants.DB_HASH_TYPE : manga[constants.DB_HASH_KEY][constants.DB_HASH_TYPE]
+    },
+    constants.DB_RANGE_KEY : {
+      constants.DB_RANGE_TYPE : manga[constants.DB_RANGE_KEY][constants.DB_RANGE_TYPE]
+    }
+  }
+  return key
 
 # Given a list of mangas retrieved from dynamodb, print all entries onto the terminal
 def print_manga_info(mangas):
