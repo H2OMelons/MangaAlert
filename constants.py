@@ -24,5 +24,9 @@ prompts = [
   'Has the manga ended? (Enter True/False): '
 ]
 
-DB_HASH_KEY = 0
-DB_RANGE_KEY = 1
+DB_HASH_KEY_INDEX = 0
+DB_RANGE_KEY_INDEX = 1
+DB_HASH_KEY = dynamodb_attributes[DB_HASH_KEY_INDEX]['key']
+DB_HASH_TYPE = dynamodb_attributes[DB_HASH_KEY_INDEX]['type']
+DB_RANGE_KEY = dynamodb_attributes[DB_RANGE_KEY_INDEX]['key']
+DB_RANGE_TYPE = dynamodb_attributes[DB_RANGE_KEY_INDEX]['type']
