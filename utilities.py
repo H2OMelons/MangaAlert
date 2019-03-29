@@ -86,5 +86,12 @@ def validate_info_input(info, category_index):
       info = info.split(',')
     else:
       info = []
+  elif category_types[category_index] == bool:
+    if info.lower() == 't' or info.lower() == 'true':
+      info = True
+    elif info.lower() == 'f' or info.lower() == 'false':
+      info = False
+    else:
+      info = None
   return info
 
