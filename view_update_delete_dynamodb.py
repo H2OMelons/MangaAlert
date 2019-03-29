@@ -3,7 +3,7 @@ import asyncio
 import aioboto3
 import constants
 from utilities import validate_menu_selection, print_menu, terminal_colors
-from utilities import print_line_sep, errors, success
+from utilities import print_line_sep, errors, success, get_terminal_dim
 
 async def main():
   selections = ["View", "Edit", "Delete", "Finish"]
@@ -14,7 +14,43 @@ async def main():
     menu_selection = input("Choose one of the menu selections: ")
     menu_selection = validate_menu_selection(menu_selection, range(1, len(selections) + 1))
     if menu_selection == 1:
-      print(1)
+      # Get the total number of items in dynamodb db
+      response = await dynamodb.scan(
+        TableName = 'manga_list',
+        Select = 'COUNT'
+      )
+      num_items = response['Count']
+      limit = 10
+      # Scan for the first 10 items
+      response = await dynamodb.scan(
+        TableName = 'manga_list',
+        Limit = limit
+      )
+      mangas = response['Items']
+      num_current_results = response['Count']
+      print_manga_info(mangas)
+      print('Displaying ' + str(num_current_results) + '/' + str(num_items) + ' results')
+
+      load_more = True
+      # Ask the user if they want to load more if there is still more to load
+      while response.get('LastEvaluatedKey') and load_more and num_current_results < num_items:
+        print_menu(['Load More', 'Finish'], True, terminal_colors.GREEN)
+        menu_selection = input('Choose one of the menu selections: ')
+        menu_selection = validate_menu_selection(menu_selection, range(1,3))
+        if menu_selection == 1:
+          load_more = True
+          response = await dynamodb.scan(
+            TableName = 'manga_list',
+            Limit = limit,
+            ExclusiveStartKey = response['LastEvaluatedKey']
+          )
+          mangas = response['Items']
+          num_current_results += response['Count']
+          print_manga_info(mangas)
+          print('Displaying ' + str(num_current_results) + '/' + str(num_items) + ' results')
+        elif menu_selection == 2:
+          load_more = False
+
     elif menu_selection == 2:
       manga_name = input("Enter the name of the manga you want to edit (-1 to exit): ")
     elif menu_selection == 3:
