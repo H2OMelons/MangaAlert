@@ -42,6 +42,8 @@ def lambda_handler(event, context):
     username = username
   )
 
+  # List that will contain all mangas that had their chapter updated
+  updated = []
   for manga in mangas:
     # Get the reddit user who posts the weekly chapter
     redditor = reddit.redditor(manga['poster']['S'])
@@ -53,13 +55,30 @@ def lambda_handler(event, context):
       # If the user created a reddit post with the manga name and chapter in the title
       # It is probably the post for the weekly chapter
       if manga_name in title and str(current_chapter) in title and 'prediction' not in title:
-        print(submission.shortlink)
+        updated.append(manga)
+        # Send text that new chapter has been posted
         sns = boto3.client('sns')
         sns.publish(
           TopicArn = os.environ.get('MANGA_ALERT_ARN'),
           Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted! \n' + submission.shortlink
         )
 
+  # For each manga that had their chapter updated, update the
+  # most_recent_chapter category in dynamodb
+  for manga in updated:
+    print(manga)
+    response = dynamodb.update_item(
+      TableName = 'manga_list',
+      Key = {
+        'manga_name' : manga['manga_name'],
+        'poster' : manga['poster']
+      },
+      ExpressionAttributeNames = {
+        '#M' : 'most_recent_chapter'
+      },
+      ExpressionAttributeValues = {
+        ':m' : {'N' : str(int(manga['most_recent_chapter']['N']) + 1)}
+      },
+      UpdateExpression = 'SET #M = :m'
+    )
 lambda_handler({},{})
-#loop = asyncio.get_event_loop()
-#loop.run_until_complete(dynamodb.close())
