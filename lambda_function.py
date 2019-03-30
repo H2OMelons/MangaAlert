@@ -66,7 +66,6 @@ def lambda_handler(event, context):
   # For each manga that had their chapter updated, update the
   # most_recent_chapter category in dynamodb
   for manga in updated:
-    print(manga)
     response = dynamodb.update_item(
       TableName = 'manga_list',
       Key = {
