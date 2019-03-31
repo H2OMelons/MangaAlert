@@ -5,11 +5,11 @@ import constants
 from utilities import validate_menu_selection, print_menu, terminal_colors
 from utilities import print_line_sep, errors, success, get_terminal_dim
 from utilities import validate_info_input
+dynamodb = aioboto3.client('dynamodb', endpoint_url = 'http://localhost:8000')
 
 async def main():
   selections = ["View", "Edit", "Delete", "Finish"]
   menu_selection = -1
-  dynamodb = aioboto3.client('dynamodb', endpoint_url = 'http://localhost:8000')
   while menu_selection != len(selections):
     print_menu(selections, True, terminal_colors.GREEN)
     menu_selection = input("Choose one of the menu selections: ")
@@ -241,5 +241,9 @@ def print_manga_info(mangas):
 
 
 if __name__ == '__main__':
-  loop = asyncio.get_event_loop()
-  loop.run_until_complete(main())
+  try:
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+  except Exception as e:
+    print(e)
+    loop.run_until_complete(dynamodb.close())

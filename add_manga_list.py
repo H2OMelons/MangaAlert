@@ -6,6 +6,7 @@ import constants
 from utilities import print_menu, errors, success, terminal_colors
 from utilities import print_line_sep, validate_menu_selection, validate_info_input
 from constants import categories
+dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
 
 upload_range = range(2,4)
 prompts = [
@@ -137,9 +138,6 @@ async def finish(manga_list):
   if len(manga_list) == 0:
     print('You didn\'t add any mangas. Ending program...')
   else:
-
-    dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
-
     print('Preparing to insert into dynamodb...')
     # List of all batch write requests (each batch request is a list of at most 25 items)
     batch_write_list = []
@@ -192,5 +190,9 @@ async def finish(manga_list):
 
 if __name__ == '__main__':
   manga_list = main()
-  loop = asyncio.get_event_loop()
-  loop.run_until_complete(finish(manga_list))
+  try:
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(finish(manga_list))
+  except Exception as e:
+    print(e)
+    loop.run_until_complete(dynamodb.close())
