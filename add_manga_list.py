@@ -11,7 +11,7 @@ from constants import categories
 dynamodb = None
 if os.environ.get('ENV') == 'PROD':
   dynamodb = aioboto3.resource('dynamodb', region_name='us_west_2')
-else
+else:
   dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
 
 upload_range = range(2,4)
