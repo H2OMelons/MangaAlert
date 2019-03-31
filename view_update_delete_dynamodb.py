@@ -2,10 +2,16 @@ import boto3
 import asyncio
 import aioboto3
 import constants
+import os
 from utilities import validate_menu_selection, print_menu, terminal_colors
 from utilities import print_line_sep, errors, success, get_terminal_dim
 from utilities import validate_info_input
-dynamodb = aioboto3.client('dynamodb', endpoint_url = 'http://localhost:8000')
+
+dynamodb = None
+if os.environ.get('ENV') == 'PROD':
+  dynamodb = aioboto3.client('dynamodb', region_name='us-west-2')
+else:
+  dynamodb = aioboto3.client('dynamodb', endpoint_url = 'http://localhost:8000')
 
 async def main():
   selections = ["View", "Edit", "Delete", "Finish"]

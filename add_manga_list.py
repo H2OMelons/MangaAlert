@@ -1,12 +1,18 @@
 import boto3
 import sys
+import os
 import asyncio
 import aioboto3
 import constants
 from utilities import print_menu, errors, success, terminal_colors
 from utilities import print_line_sep, validate_menu_selection, validate_info_input
 from constants import categories
-dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
+
+dynamodb = None
+if os.environ.get('ENV') == 'PROD':
+  dynamodb = aioboto3.resource('dynamodb', region_name='us_west_2')
+else
+  dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
 
 upload_range = range(2,4)
 prompts = [

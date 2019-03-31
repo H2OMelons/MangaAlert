@@ -1,6 +1,11 @@
 import boto3
+import os
 
-dynamodb = boto3.resource('dynamodb', endpoint_url='http://localhost:8000')
+dynamodb = None
+if os.environ.get('ENV') == 'PROD':
+  dynamodb = boto3.resource('dynamodb')
+else:
+  dynamodb = boto3.resource('dynamodb', endpoint_url='http://localhost:8000')
 
 table = dynamodb.create_table(
   TableName = 'manga_list',
