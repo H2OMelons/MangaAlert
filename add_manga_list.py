@@ -10,7 +10,7 @@ from constants import categories
 
 dynamodb = None
 if os.environ.get('ENV') == 'PROD':
-  dynamodb = aioboto3.resource('dynamodb', region_name='us_west_2')
+  dynamodb = aioboto3.resource('dynamodb', region_name='us-west-2')
 else:
   dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
 
