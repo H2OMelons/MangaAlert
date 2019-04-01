@@ -1,9 +1,13 @@
 import boto3
-import asyncio
-import aioboto3
 import praw
 import os
-dynamodb = boto3.client('dynamodb', endpoint_url = 'http://localhost:8000')
+
+dynamodb = None
+
+if os.environ.get('ENV') == 'PROD':
+  dynamodb = boto3.client('dynamodb')
+else:
+  dynamodb = boto3.client('dynamodb', endpoint_url = 'http://localhost:8000')
 
 def lambda_handler(event, context):
   table_name = 'manga_list'
@@ -57,11 +61,14 @@ def lambda_handler(event, context):
       if manga_name in title and str(current_chapter) in title and 'prediction' not in title:
         updated.append(manga)
         # Send text that new chapter has been posted
-        sns = boto3.client('sns')
-        sns.publish(
-          TopicArn = os.environ.get('MANGA_ALERT_ARN'),
-          Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted! \n' + submission.shortlink
-        )
+        if os.environ.get('ENV') == 'PROD':
+          sns = boto3.client('sns')
+          sns.publish(
+            TopicArn = os.environ.get('MANGA_ALERT_ARN'),
+            Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted! \n' + submission.shortlink
+          )
+        else:
+          print(submission.shortlink)
 
   # For each manga that had their chapter updated, update the
   # most_recent_chapter category in dynamodb
@@ -80,4 +87,6 @@ def lambda_handler(event, context):
       },
       UpdateExpression = 'SET #M = :m'
     )
-lambda_handler({},{})
+
+if os.environ.get('ENV') != 'PROD':
+  lambda_handler({},{})
