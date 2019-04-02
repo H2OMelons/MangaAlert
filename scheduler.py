@@ -1,7 +1,7 @@
 import boto3
 from utilities import print_menu, terminal_colors, validate_menu_selection
 
-cloudwatch = boto3.client('cloudwatch')
+events = boto3.client('events')
 
 def main():
   menu_choices = ['View', 'Edit', 'Delete', 'Finish']
