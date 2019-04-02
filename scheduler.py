@@ -1,5 +1,6 @@
 import boto3
 from utilities import print_menu, terminal_colors, validate_menu_selection
+from utilities import print_line_sep
 
 events = boto3.client('events')
 
@@ -19,13 +20,23 @@ def main():
       delete_cloudwatch_schedules()
 
 def view_cloudwatch_schedules():
-  print()
+  rules = events.list_rules()
+  rules = rules['Rules']
+  print_rules(rules)
 
 def edit_cloudwatch_schedules():
   print()
 
 def delete_cloudwatch_schedules():
   print()
+
+def print_rules(rules):
+  for rule in rules:
+    print_line_sep()
+    print('Name: ' + rule['Name'])
+    print('State: ' + rule['State'])
+    print('Schedule: ' + rule['ScheduleExpression'])
+  print_line_sep()
 
 if __name__ == '__main__':
   main()
