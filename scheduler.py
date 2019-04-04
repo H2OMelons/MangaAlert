@@ -69,55 +69,58 @@ def edit_cloudwatch_schedules():
     )
     rules.extend(response['Rules'])
 
-  print_rules(rules)
+  if len(rules) == 0:
+    errors.print_error('There were no rules matching that name')
+  else:
+    print_rules(rules)
 
-  # Keep prompting the user to choose which rule they want to edit until they make
-  # a valid selection
-  rule_selection = None
-  while rule_selection == None:
-    rule_selection = input('Select the rule you want to edit (Enter a number): ')
-    rule_selection = validate_menu_selection(rule_selection, range(1, len(rules) + 1))
+    # Keep prompting the user to choose which rule they want to edit until they make
+    # a valid selection
+    rule_selection = None
+    while rule_selection == None:
+      rule_selection = input('Select the rule you want to edit (Enter a number): ')
+      rule_selection = validate_menu_selection(rule_selection, range(1, len(rules) + 1))
 
-  rule_selection -= 1
-  rule_categories = ['State', 'ScheduleExpression', 'Description', 'Finish']
-  rule_category_selection = None
-  changed = False
+    rule_selection -= 1
+    rule_categories = ['State', 'ScheduleExpression', 'Description', 'Finish']
+    rule_category_selection = None
+    changed = False
 
-  # Keep prompting user for a new value to edit the rule while the input is invalid or
-  # while the user does not select 'Finish'
-  while rule_category_selection == None or rule_category_selection != len(rule_categories):
-    print_menu(rule_categories, True, terminal_colors.GREEN)
-    rule_category_selection = input('What would you like to edit (Enter a number): ')
-    rule_category_selection = validate_menu_selection(rule_category_selection, range(1, len(rule_categories) + 1))
+    # Keep prompting user for a new value to edit the rule while the input is invalid or
+    # while the user does not select 'Finish'
+    while rule_category_selection == None or rule_category_selection != len(rule_categories):
+      print_menu(rule_categories, True, terminal_colors.GREEN)
+      rule_category_selection = input('What would you like to edit (Enter a number): ')
+      rule_category_selection = validate_menu_selection(rule_category_selection, range(1, len(rule_categories) + 1))
 
-    if rule_category_selection == None or rule_category_selection == len(rule_categories):
-      continue
-
-    rule_category_selection -= 1
-
-    new_val = input('Enter the new value: ')
-
-    # If the user chose to edit the state, make sure its a valid state
-    if rule_category_selection == 0:
-      new_val = new_val.upper()
-      if new_val != 'ENABLED' and new_val != 'DISABLED':
+      if rule_category_selection == None or rule_category_selection == len(rule_categories):
         continue
 
-    # Only register the change if the value is different
-    if rules[rule_selection][rule_categories[rule_category_selection]] != new_val:
-      rules[rule_selection][rule_categories[rule_category_selection]] = new_val
-      changed = True
+      rule_category_selection -= 1
 
-  # If the user made an actual change, then update
-  if changed:
-    response = events.put_rule(
-      Name = rules[rule_selection]['Name'],
-      ScheduleExpression = rules[rule_selection]['ScheduleExpression'],
-      State = rules[rule_selection]['State'],
-      Description = rules[rule_selection]['Description']
-    )
+      new_val = input('Enter the new value: ')
 
-    success.print_success('Successfully updated ' + rules[rule_selection]['Name'])
+      # If the user chose to edit the state, make sure its a valid state
+      if rule_category_selection == 0:
+        new_val = new_val.upper()
+        if new_val != 'ENABLED' and new_val != 'DISABLED':
+          continue
+
+      # Only register the change if the value is different
+      if rules[rule_selection][rule_categories[rule_category_selection]] != new_val:
+        rules[rule_selection][rule_categories[rule_category_selection]] = new_val
+        changed = True
+
+    # If the user made an actual change, then update
+    if changed:
+      response = events.put_rule(
+        Name = rules[rule_selection]['Name'],
+        ScheduleExpression = rules[rule_selection]['ScheduleExpression'],
+        State = rules[rule_selection]['State'],
+        Description = rules[rule_selection]['Description']
+      )
+
+      success.print_success('Successfully updated ' + rules[rule_selection]['Name'])
 
 def delete_cloudwatch_schedules():
   rule_name = input('Enter the name of the rule you want to delete: ')
