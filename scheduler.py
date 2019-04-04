@@ -108,6 +108,8 @@ def edit_cloudwatch_schedules():
 
       # Only register the change if the value is different
       if rules[rule_selection][rule_categories[rule_category_selection]] != new_val:
+        if rule_category_selection == 1:
+          new_val = 'cron' + new_val
         rules[rule_selection][rule_categories[rule_category_selection]] = new_val
         changed = True
 
