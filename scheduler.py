@@ -56,7 +56,7 @@ def add_cloudwatch_schedules():
   )
 
 def edit_cloudwatch_schedules():
-  rule_name = input('Enter the name of the rule you want to delete: ')
+  rule_name = input('Enter the name of the rule you want to edit: ')
   # Get all the rules whose names have the prefix of the name the user entered
   response = events.list_rules(
     NamePrefix = rule_name
