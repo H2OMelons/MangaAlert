@@ -93,5 +93,9 @@ def validate_info_input(info, category_index):
       info = False
     else:
       info = None
+  elif categories[category_index] == 'Update Type':
+    info = info.lower()
+    if info not in ['daily', 'weekly', 'biweekly', 'monthly', 'other']:
+      info = None
   return info
 
