@@ -16,10 +16,11 @@ else:
 
 upload_range = range(2,4)
 prompts = [
-  "What is the name of the manga? ",
-  "Who is the reddit user that posts the chapter? ",
-  "What is the most recent chapter number? ",
-  "Enter any additional filters separated by commas (Press enter if none): "
+  'What is the name of the manga? ',
+  'Who is the reddit user that posts the chapter? ',
+  'What is the most recent chapter number? ',
+  'How often is the manga updated? (daily, weekly, biweekly, monthly, other): ',
+  'Enter any additional filters separated by commas (Press enter if none): '
 ]
 main_menu = [
   'Add Manga', 'View All', 'Edit Additions', 'Delete an Addition', 'Finish'
@@ -120,7 +121,7 @@ def edit_manga_list(manga_list):
 def delete_from_manga_list(manga_list):
   # Get a list of all the manga names that the user has added to the list
   manga_names = [manga[categories[0]] for manga in manga_list]
-  manga_names.append("Go Back")
+  manga_names.append('Go Back')
   # Print them all as a menu
   manga_selection = -1
   while manga_selection != len(manga_names):
@@ -154,10 +155,12 @@ async def finish(manga_list):
       item['manga_name'] = manga_list[i][categories[0]]
       item['poster'] = manga_list[i][categories[1]]
       item['most_recent_chapter'] = manga_list[i][categories[2]]
-      additional_filters = manga_list[i][categories[3]]
+      item['update_type'] = manga_list[i][categories[3]]
+      additional_filters = manga_list[i][categories[4]]
       if len(additional_filters) != 0:
         item['additional_filters'] = additional_filters
       item['ended'] = False
+      item['last_updated_time'] = 0
       batch_write_buffer.append({'PutRequest' : {'Item' : item}})
       if len(batch_write_buffer) == 25:
         batch_write_list.append(batch_write_buffer)
@@ -192,7 +195,7 @@ async def finish(manga_list):
 
     # Close the dynamodb connection
     await dynamodb.close()
-    success.print_success("All mangas successfully added. Ending Program...")
+    success.print_success('All mangas successfully added. Ending Program...')
 
 if __name__ == '__main__':
   manga_list = main()
