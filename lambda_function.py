@@ -80,10 +80,10 @@ def lambda_handler(event, context):
           sns = boto3.client('sns')
           sns.publish(
             TopicArn = os.environ.get('MANGA_ALERT_ARN'),
-            Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted! \n' + submission['url']
+            Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted! \n' + submission['full_link']
           )
         else:
-          print(submission['url'])
+          print(submission['full_link'])
 
   # If a manga was updated, update all entries with the same name to have
   # the new most recent chapter
