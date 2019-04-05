@@ -167,8 +167,6 @@ async def main():
                     update_expression += ','
                   update_expression += ' #' + str(change) + ' = :' + str(change)
                 # Create an api call to update the item
-                print(expression_att_values)
-                print(expression_att_names)
                 response = await dynamodb.update_item(
                   TableName = constants.TABLE_NAME,
                   Key = generate_db_key(mangas[selection]),
