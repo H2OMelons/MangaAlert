@@ -6,7 +6,7 @@ import aioboto3
 import constants
 from utilities import print_menu, errors, success, terminal_colors
 from utilities import print_line_sep, validate_menu_selection, validate_info_input
-from constants import categories
+from constants import categories, prompts
 
 dynamodb = None
 if os.environ.get('ENV') == 'PROD':
@@ -15,13 +15,8 @@ else:
   dynamodb = aioboto3.resource('dynamodb', endpoint_url = 'http://localhost:8000')
 
 upload_range = range(2,4)
-prompts = [
-  'What is the name of the manga? ',
-  'Who is the reddit user that posts the chapter? ',
-  'What is the most recent chapter number? ',
-  'How often is the manga updated? (daily, weekly, biweekly, monthly, other): ',
-  'Enter any additional filters separated by commas (Press enter if none): '
-]
+# When asking user to add manga, we use all prompts except for if manga ended
+prompts = prompts[:-1]
 main_menu = [
   'Add Manga', 'View All', 'Edit Additions', 'Delete an Addition', 'Finish'
 ]
