@@ -1,6 +1,6 @@
 import boto3
-import praw
 import os
+import requests
 
 dynamodb = None
 
@@ -44,19 +44,6 @@ def lambda_handler(event, context):
     else:
       manga_name_tracker[manga_name] = [i]
 
-  client_id = os.environ.get('REDDIT_CLIENT_ID')
-  client_secret = os.environ.get('REDDIT_CLIENT_SECRET')
-  user_agent = os.environ.get('REDDIT_USER_AGENT')
-  refresh_token = os.environ.get('REDDIT_REFRESH_TOKEN')
-
-  # Build an instance of praw (Reddit api wrapper)
-  reddit = praw.Reddit(
-    client_id = client_id,
-    client_secret = client_secret,
-    user_agent = user_agent,
-    refresh_token = refresh_token
-  )
-
   # Dictionary where the key is the name of the manga that was updated and the
   # value is the new most recent chapter number
   updated = {}
@@ -68,10 +55,20 @@ def lambda_handler(event, context):
     if updated.get(og_manga_name):
       continue
 
-    # Get the reddit user who posts the weekly chapter
-    redditor = reddit.redditor(manga['poster']['S'])
-    for submission in redditor.submissions.new(limit=10):
-      title = submission.title.lower()
+    # Get the 10 most recent posts of the user
+    submissions = requests.get(
+      'https://api.pushshift.io/reddit/submission/search/',
+      params = {
+        'author' : manga['poster']['S'],
+        'size' : 10,
+        'before' : None,
+        'sort' : 'desc',
+        'sort_type' : 'created_utc'
+      }
+    )
+    submissions = submissions.json()['data']
+    for submission in submissions:
+      title = submission['title'].lower()
       manga_name = og_manga_name.lower()
       current_chapter = int(manga['most_recent_chapter']['N']) + 1
       # If the user created a reddit post with the manga name and chapter in the title
@@ -83,10 +80,10 @@ def lambda_handler(event, context):
           sns = boto3.client('sns')
           sns.publish(
             TopicArn = os.environ.get('MANGA_ALERT_ARN'),
-            Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted! \n' + submission.shortlink
+            Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted! \n' + submission['url']
           )
         else:
-          print(submission.shortlink)
+          print(submission['url'])
 
   # If a manga was updated, update all entries with the same name to have
   # the new most recent chapter
