@@ -26,24 +26,10 @@ brew install python3
 ```
 3. Install relevant packages
 ```
-pip3 install boto3
-pip3 install aioboto3
-pip3 install praw
+python -m pip install --user boto3
+python -m pip install --user aioboto3
+python -m pip install --user requests
 ```
-
-#### Set up Reddit api
-
-MangaAlert utilizes Reddit api so you will either have to use your existing account or create a new one.
-
-1. [Register](https://www.reddit.com/prefs/apps/) the application with Reddit
-	1. Click 'create app'
-	2. Name: Anything you want
-	3. Select script
-	4. Description: Anything you want
-	5. About url: Leave blank
-	6. Redirect url: ```http://localhost:8000```
-2. Client ID: Note down the client id. It should be a string of letters and numbers 2 lines down from the name of the application on the top left
-3. Client Secret: If you don't see a section called 'secret' click on 'edit'
 
 #### Set up AWS
 
@@ -84,7 +70,7 @@ pip3 install awscli
 ```
 $ mkdir package
 $ cd package
-$ pip install praw --target .
+$ pip install requests --target .
 $ zip -r9 ../function.zip .
 $ cd ../
 $ zip -g function.zip lambda_function.py
@@ -109,13 +95,9 @@ $ zip -g function.zip lambda_function.py
 	8. Select 'Upload' and choose the function.zip file
 5. Scroll down a bit to get to the 'Environment variables' section and set the following key:value pairs:
 	1. Key: ENV, Value: PROD
-	2. Key: REDDIT_CLIENT_ID, Value: <Your Reddit Client ID>
-	3. Key: REDDIT_CLIENT_SECRET, Value: <Your Reddit Client Secret>
-	4. Key: REDDIT_PASSWORD, Value: <Your Reddit password>
-	5. Key: REDDIT_USERNAME, Value: <Your Reddit Username>
-	6. Key: REDDIT_USER_AGENT, Value: MangaAlert by <Your Reddit Username>
-	7. Key: MANGA_ALERT_ARN, Value: <Your SNS MangaAlert ARN>
-6. Note the value of the ARN at the top right of the page
+	2. Key: MANGA_ALERT_ARN, Value: <Your SNS MangaAlert ARN>
+6. Scroll down to the 'Basic Settings' section and under 'Timeout', set it to 15 seconds
+7. Note the value of the ARN at the top right of the page
 
 #### Set up AWS DynamoDB
 1. Go back to the terminal and to the MangaAlert directory
