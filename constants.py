@@ -24,7 +24,7 @@ prompts = [
   'What is the name of the manga? ',
   'Who is the reddit user that posts the chapter? ',
   'What is the most recent chapter number? ',
-  'What is the update type? (daily, weekly, biweekly, monthly, or other): '
+  'What is the update type? (daily, weekly, biweekly, monthly, or other): ',
   'Enter any additional filters separated by commas (Press enter if none): ',
   'Has the manga ended? (Enter True/False): '
 ]
