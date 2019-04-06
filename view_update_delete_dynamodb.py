@@ -241,6 +241,9 @@ def print_manga_info(mangas):
           print('\t' + att['key'] + ': ' + str(arr))
         else:
           print('\t' + att['key'] + ': ' + str(mangas[i].get(att['key'])[att['type']]))
+
+    if os.environ.get('ENV') == 'DEV':
+      print('\t' + 'last_updated_time: ' + str(mangas[i].get('last_updated_time')['N']))
   print_line_sep()
 
 
