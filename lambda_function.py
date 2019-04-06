@@ -100,6 +100,8 @@ def lambda_handler(event, context):
       }
     )
     submissions = submissions.json()['data']
+    # Array to keep track of links to the updated chapter
+    links = []
     for submission in submissions:
       title = submission['title'].lower()
       manga_name = og_manga_name.lower()
@@ -108,15 +110,20 @@ def lambda_handler(event, context):
       # It is probably the post for the weekly chapter
       if manga_name in title and str(current_chapter) in title and 'prediction' not in title:
         updated[og_manga_name] = current_chapter
-        # Send text that new chapter has been posted
-        if os.environ.get('ENV') == 'PROD':
-          sns = boto3.client('sns')
-          sns.publish(
-            TopicArn = os.environ.get('MANGA_ALERT_ARN'),
-            Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted!' + submission['full_link']
-          )
-        else:
-          print(submission['full_link'])
+        links.append(submission['full_link'])
+
+    if len(links) > 0:
+      # Send text that new chapter has been posted
+      if os.environ.get('ENV') == 'PROD':
+        sns = boto3.client('sns')
+        sns.publish(
+          TopicArn = os.environ.get('MANGA_ALERT_ARN'),
+          Message = og_manga_name + ' Chapter ' + str(current_chapter) + ' has been posted!' + ' '.join(links)
+        )
+      else:
+        for link in links:
+          print(link)
+
 
   # If a manga was updated, update all entries with the same name to have
   # the new most recent chapter
