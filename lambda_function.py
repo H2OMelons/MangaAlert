@@ -134,7 +134,7 @@ def lambda_handler(event, context):
           '#T' : 'last_updated_time'
         },
         ExpressionAttributeValues = {
-          ':m' : {'N' : str(int(manga['most_recent_chapter']['N']) + 1)},
+          ':m' : {'N' : str(updated[manga_name])},
           ':t' : {'N' : str(CURRENT_TIME)}
         },
         UpdateExpression = 'SET #M = :m, #T = :t'
