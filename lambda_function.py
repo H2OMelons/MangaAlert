@@ -1,6 +1,7 @@
 import boto3
 import os
 import requests
+import time
 
 dynamodb = None
 
@@ -10,15 +11,46 @@ else:
   dynamodb = boto3.client('dynamodb', endpoint_url = 'http://localhost:8000')
 
 def lambda_handler(event, context):
+  # number of milliseconds in a day
+  NUM_MS_IN_DAY = 86400000
+  DAILY_WAIT = 0.75
+  WEEKLY_WAIT = 6
+  BIWEEKLY_WAIT = 13
+  MONTHLY_WAIT = 28
+  CURRENT_TIME = int(round(time.time() * 1000))
   table_name = 'manga_list'
-  filter_exp = 'ended = :e'
-  exp_att_val = {':e' : {"BOOL" : False}}
+  filter_exp = ('ended = :e and ('
+               'update_type=:o or '
+               '(update_type=:d and #lut <= :dlut) or '
+               '(update_type=:w and #lut <= :wlut) or '
+               '(update_type=:b and #lut <= :blut) or '
+               '(update_type=:m and #lut <= :mlut))')
+
+  exp_att_val = {
+    ':e' : {'BOOL' : False},
+    ':o' : {'S' : 'other'},
+    ':d' : {'S' : 'daily'},
+    ':w' : {'S' : 'weekly'},
+    ":b" : {'S' : 'biweekly'},
+    ":m" : {'S' : 'monthly'},
+    ':dlut' : {'N' : str(CURRENT_TIME - (NUM_MS_IN_DAY * DAILY_WAIT))},
+    ':wlut' : {'N' : str(CURRENT_TIME - (NUM_MS_IN_DAY * WEEKLY_WAIT))},
+    ':blut' : {'N' : str(CURRENT_TIME - (NUM_MS_IN_DAY * BIWEEKLY_WAIT))},
+    ':mlut' : {'N' : str(CURRENT_TIME - (NUM_MS_IN_DAY * BIWEEKLY_WAIT))}
+  }
+  exp_att_name = {
+    '#lut' : 'last_updated_time'
+  }
 
   # Scan the dynamodb table for all mangas that have not ended yet
+  # and has reached the time where it could be updated.
+  # For example, for weekly mangas this is after 6 days so check
+  # to see that current_time - 6days >= last updated time for that manga
   response = dynamodb.scan(
     TableName = table_name,
     FilterExpression = filter_exp,
-    ExpressionAttributeValues = exp_att_val
+    ExpressionAttributeValues = exp_att_val,
+    ExpressionAttributeNames = exp_att_name
   )
   mangas = response['Items']
   # Keep scanning until all mangas have been retrieved
@@ -27,6 +59,7 @@ def lambda_handler(event, context):
       TableName = table_name,
       FilterExpression = filter_exp,
       ExpressionAttributeValues = exp_att_val,
+      ExpressionAttributeName = exp_att_name,
       ExclusiveStartKey = resp.get('LastEvaluatedKey')
     )
     mangas.extend(response['Items'])
@@ -97,12 +130,14 @@ def lambda_handler(event, context):
           'poster' : manga['poster']
         },
         ExpressionAttributeNames = {
-          '#M' : 'most_recent_chapter'
+          '#M' : 'most_recent_chapter',
+          '#T' : 'last_updated_time'
         },
         ExpressionAttributeValues = {
-          ':m' : {'N' : str(int(manga['most_recent_chapter']['N']) + 1)}
+          ':m' : {'N' : str(int(manga['most_recent_chapter']['N']) + 1)},
+          ':t' : {'N' : str(CURRENT_TIME)}
         },
-        UpdateExpression = 'SET #M = :m'
+        UpdateExpression = 'SET #M = :m, #T = :t'
       )
 
 if os.environ.get('ENV') != 'PROD':
