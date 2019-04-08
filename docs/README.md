@@ -121,3 +121,42 @@ python3 scheduler.py
 7. Enter a description
 8. Enter any number
 9. Enter the ARN of the MangaAlert lambda function
+
+### Adding your first manga
+
+1. On your terminal navigate to the directory that contains the MangaAlert files
+2. Run
+```
+export ENV=PROD
+```
+3. Run
+```
+python3 add_manga_list.py
+```
+	**NOTE: For the following steps, make sure everything is spelled correctly and has the right capitalization**
+	1. **Name:** Enter the name of the manga
+	2. **Poster:** Enter the username of the user that posts the weekly chapter on reddit (ex: the Reddit user that posts the weekly One Piece chapter is NewSpecie)
+	3. **Most Recent Chapter Number:** The chapter number that was posted most recently
+	4. **Update Type:** How often does the manga usually update? (ex: One Piece usually updates every week so it is weekly)
+	5. **Additional Filters:** At the moment this doesn't do anything, so feel free to just press enter
+	6. Choose '2' to view the manga you just entered. If anything is incorrect choose '3' to edit
+	7. Choose '5' to finish. Now the manga you inputted has been uploaded to DynamoDB  
+	**NOTE: If you enter the same manga and poster twice, DynamoDB doesn't allowed duplicates and the first entry will be overwritten**
+
+### Working with DynamoDB
+
+1. On your terminal navigate to the directory that contains the MangaAlert Files
+2. Run
+```
+export ENV=PROD
+```
+3. Run
+```
+python3 view_update_delete_dynamodb.py
+```
+4. To view all the mangas you have stored in DynamoDB, select `1`
+5. To edit any manga you have stored in DynamoDB, select `2` and enter the name of the manga    
+	**NOTE: The name is case sensitive**
+6. To delete any manga you have stored in DynamoDB, select `3` and enter the name of the manga
+	**NOTE: The name is case sensitive**
+7. When you are finished select `4` to finish
