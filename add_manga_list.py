@@ -148,7 +148,7 @@ async def finish(manga_list):
     for i in range(len(manga_list)):
       item = {}
       item['manga_name'] = manga_list[i][categories[0]]
-      item['poster'] = manga_list[i][categories[1]]
+      item['subreddit'] = manga_list[i][categories[1]]
       item['most_recent_chapter'] = manga_list[i][categories[2]]
       item['update_type'] = manga_list[i][categories[3]]
       additional_filters = manga_list[i][categories[4]]
