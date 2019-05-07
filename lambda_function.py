@@ -92,7 +92,7 @@ def lambda_handler(event, context):
     submissions = requests.get(
       'https://api.pushshift.io/reddit/submission/search/',
       params = {
-        'author' : manga['poster']['S'],
+        'author' : manga['subreddit']['S'],
         'size' : 10,
         'before' : None,
         'sort' : 'desc',
@@ -134,7 +134,7 @@ def lambda_handler(event, context):
         TableName = 'manga_list',
         Key = {
           'manga_name' : manga['manga_name'],
-          'poster' : manga['poster']
+          'subreddit' : manga['subreddit']
         },
         ExpressionAttributeNames = {
           '#M' : 'most_recent_chapter',
