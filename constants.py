@@ -2,7 +2,7 @@ TABLE_NAME = 'manga_list'
 
 categories = [
   "Name",
-  "User",
+  "Subreddit",
   "Most Recent Chapter",
   "Update Type",
   "Additional Filters"
@@ -13,7 +13,7 @@ category_types = [
 
 dynamodb_attributes = [
   {'key' : 'manga_name', 'type' : 'S'},
-  {'key' : 'poster', 'type' : 'S'},
+  {'key' : 'subreddit', 'type' : 'S'},
   {'key' : 'most_recent_chapter', 'type' : 'N'},
   {'key' : 'update_type', 'type' : 'S'},
   {'key' : 'additional_filters', 'type' : 'L'},
@@ -22,7 +22,7 @@ dynamodb_attributes = [
 
 prompts = [
   'What is the name of the manga? ',
-  'Who is the reddit user that posts the chapter? ',
+  'Which subreddit is the chapter posted to? ',
   'What is the most recent chapter number? ',
   'What is the update type? (daily, weekly, biweekly, monthly, or other): ',
   'Enter any additional filters separated by commas (Press enter if none): ',
