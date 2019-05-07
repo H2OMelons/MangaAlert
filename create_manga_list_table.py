@@ -15,7 +15,7 @@ table = dynamodb.create_table(
       'KeyType' : 'HASH'
     },
     {
-      'AttributeName' : 'poster',
+      'AttributeName' : 'subreddit',
       'KeyType' : 'RANGE'
     }
   ],
@@ -25,7 +25,7 @@ table = dynamodb.create_table(
       'AttributeType' : 'S'
     },
     {
-      'AttributeName' : 'poster',
+      'AttributeName' : 'subreddit',
       'AttributeType' : 'S'
     }
   ],
