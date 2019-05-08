@@ -90,10 +90,10 @@ def lambda_handler(event, context):
 
     # Get the 10 most recent posts of the user
     submissions = requests.get(
-      'https://api.pushshift.io/reddit/submission/search/',
+      'https://api.pushshift.io/reddit/search/submission',
       params = {
-        'author' : manga['subreddit']['S'],
-        'size' : 10,
+        'subreddit' : manga['subreddit']['S'],
+        'size' : 20,
         'before' : None,
         'sort' : 'desc',
         'sort_type' : 'created_utc'
