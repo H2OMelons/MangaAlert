@@ -13,19 +13,11 @@ table = dynamodb.create_table(
     {
       'AttributeName' : 'manga_name',
       'KeyType' : 'HASH'
-    },
-    {
-      'AttributeName' : 'subreddit',
-      'KeyType' : 'RANGE'
     }
   ],
   AttributeDefinitions = [
     {
       'AttributeName' : 'manga_name',
-      'AttributeType' : 'S'
-    },
-    {
-      'AttributeName' : 'subreddit',
       'AttributeType' : 'S'
     }
   ],
