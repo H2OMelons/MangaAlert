@@ -88,18 +88,21 @@ def lambda_handler(event, context):
     if updated.get(og_manga_name):
       continue
 
-    # Get the 10 most recent posts of the user
-    submissions = requests.get(
-      'https://api.pushshift.io/reddit/search/submission',
-      params = {
-        'subreddit' : manga['subreddit']['S'],
-        'size' : 20,
-        'before' : None,
-        'sort' : 'desc',
-        'sort_type' : 'created_utc'
-      }
-    )
-    submissions = submissions.json()['data']
+    submissions = []
+    for subreddit in manga['subreddits']['L']:
+      # Get the 10 most recent posts of the user
+      submission = requests.get(
+        'https://api.pushshift.io/reddit/search/submission',
+        params = {
+          'subreddit' : subreddit,
+          'size' : 20,
+          'before' : None,
+          'sort' : 'desc',
+          'sort_type' : 'created_utc'
+        }
+      )
+      submission = submission.json()['data']
+    submissions.extend(submission)
     # Array to keep track of links to the updated chapter
     links = []
     for submission in submissions:
@@ -133,8 +136,7 @@ def lambda_handler(event, context):
       response = dynamodb.update_item(
         TableName = 'manga_list',
         Key = {
-          'manga_name' : manga['manga_name'],
-          'subreddit' : manga['subreddit']
+          'manga_name' : manga['manga_name']
         },
         ExpressionAttributeNames = {
           '#M' : 'most_recent_chapter',
