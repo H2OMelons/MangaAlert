@@ -94,7 +94,7 @@ def lambda_handler(event, context):
       submission = requests.get(
         'https://api.pushshift.io/reddit/search/submission',
         params = {
-          'subreddit' : subreddit,
+          'subreddit' : subreddit['S'],
           'size' : 20,
           'before' : None,
           'sort' : 'desc',
