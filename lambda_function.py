@@ -32,7 +32,7 @@ def lambda_handler(event, context):
       subreddit = subreddit['S']
       additional_filters = []
       if manga.get('additional_filters'):
-        additional_filters = [x['S'] for x in manga['additional_filters']['L']]
+        additional_filters = {x['M']['subreddit']['S'] : x['M'] for x in manga['additional_filters']['L']}
 
       manga_item = {
         'name' : manga['manga_name']['S'].lower(),
@@ -96,7 +96,44 @@ def lambda_handler(event, context):
           continue
         current_chapter = int(manga['most_recent_chapter']) + 1
         additional_filters = manga['additional_filters']
-        if manga_name in title and str(current_chapter) in title and 'prediction' not in title:
+        additional_filters = additional_filters[subreddit] if additional_filters.get(subreddit) else {}
+        # or filters are keywords where we want at least one to appear in the title
+        or_filters = [manga_name]
+        if additional_filters.get('or'):
+          or_filters.extend([x['S'] for x in additional_filters['or']['L']])
+        # and filters are keywords, where we want ALL the keywords in the list to appear in the title
+        and_filters = [str(current_chapter)]
+        if additional_filters.get('and'):
+          and_filters.extend(x['S'] for x in additional_filters['and']['L'])
+        # Exclude filters are keywords that tell us that the post is not the one we want
+        exclude_filters = []
+        if additional_filters.get('exclude'):
+          exclude_filters = [x['S'] for x in additional_filters['exclude']['L']]
+
+        # If any of the exclude filters are in the title, then this post is not the one we wnat
+        # so continue
+        exclude_found = False
+        for exclude in exclude_filters:
+          if exclude in title:
+            exclude_found = True
+            break
+
+        # If any of the and filters are not in the title, continue
+        and_found = False
+        for a_filter in and_filters:
+          if a_filter not in title:
+            and_found = True
+            break
+
+        # If none of the or filters is in title, title isn't the one we want
+        or_found = True
+        for o_filter in or_filters:
+          if o_filter in title:
+            or_found = False
+            break
+
+        # If the title met all conditions, then it is the one we want
+        if not exclude_found and not and_found and not or_found:
           updated[manga_name] = current_chapter
           links.append({
             'url' : submission['full_link'],
@@ -113,6 +150,7 @@ def lambda_handler(event, context):
       sns.publish(
         TopicArn = os.environ.get('MANGA_ALERT_ARN'),
         Message = text_msg
+      )
     else:
       for link in links:
         print(link)
@@ -124,7 +162,7 @@ def lambda_handler(event, context):
     response = dynamodb.update_item(
       TableName = 'manga_list',
       Key = {
-        'manga_name' : manga_name
+        'manga_name' : {"S" : manga_name}
       },
       ExpressionAttributeNames = {
         '#M' : 'most_recent_chapter'
