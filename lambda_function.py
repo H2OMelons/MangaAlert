@@ -1,6 +1,7 @@
 import boto3
 import os
 import requests
+import time
 
 dynamodb = None
 
@@ -70,15 +71,15 @@ def lambda_handler(event, context):
     if len(mangas_list) == 0:
       continue
 
-    # Get the 20 most recent posts in this subreddit
+    # Get the posts made in the last 6 minutes
     submissions = []
     submission = requests.get(
       'https://api.pushshift.io/reddit/search/submission',
       params = {
         'subreddit' : subreddit,
         'size' : 20,
-        'before' : None,
-        'sort' : 'desc',
+        'after' : int(time.time()) - 660,
+        'sort' : 'asc',
         'sort_type' : 'created_utc'
       }
     )
