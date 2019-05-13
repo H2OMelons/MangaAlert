@@ -108,9 +108,11 @@ def lambda_handler(event, context):
         if additional_filters.get('or'):
           or_filters.extend([x['S'] for x in additional_filters['or']['L']])
         # and filters are keywords, where we want ALL the keywords in the list to appear in the title
-        and_filters = [str(current_chapter)]
+        and_filters = []
         if additional_filters.get('and'):
-          and_filters.extend(x['S'] for x in additional_filters['and']['L'])
+          and_filters.extend([x['S'] for x in additional_filters['and']['L']])
+        if '#chapter_number' in and_filters:
+          and_filters[and_filters.index('#chapter_number')] = str(current_chapter)
         # Exclude filters are keywords that tell us that the post is not the one we want
         exclude_filters = []
         if additional_filters.get('exclude'):
