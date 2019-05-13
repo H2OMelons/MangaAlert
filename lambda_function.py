@@ -89,6 +89,11 @@ def lambda_handler(event, context):
     # Loop through all posts to the subreddit and check the titles to see if
     # it is the new chapter for the mangas we are looking for
     for submission in submissions:
+
+      # Skip the submission if it was removed
+      if submission['selftext'] == '[deleted]' or not submission['is_crosspostable']:
+        continue
+
       title = submission['title'].lower()
 
       for manga in mangas_list:
