@@ -1,7 +1,6 @@
 import boto3
 import os
 import requests
-import time
 
 dynamodb = None
 
