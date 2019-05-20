@@ -78,8 +78,7 @@ def lambda_handler(event, context):
       params = {
         'subreddit' : subreddit,
         'size' : 20,
-        'after' : int(time.time()) - 660,
-        'sort' : 'asc',
+        'sort' : 'desc',
         'sort_type' : 'created_utc'
       }
     )
@@ -91,7 +90,7 @@ def lambda_handler(event, context):
     for submission in submissions:
 
       # Skip the submission if it was removed
-      if submission['selftext'] == '[deleted]' or not submission['is_crosspostable']:
+      if submission['selftext'] == '[deleted]' or not submission['is_crosspostable'] or submission['selftext'] == '[removed]':
         continue
 
       title = submission['title'].lower()
