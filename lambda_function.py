@@ -89,7 +89,7 @@ def lambda_handler(event, context):
     for submission in submissions:
 
       # Skip the submission if it was removed
-      if submission['selftext'] == '[deleted]' or not submission['is_crosspostable'] or submission['selftext'] == '[removed]':
+      if 'selftext' not in submission or submission['selftext'] == '[deleted]' or not submission['is_crosspostable'] or submission['selftext'] == '[removed]':
         continue
 
       title = submission['title'].lower()
