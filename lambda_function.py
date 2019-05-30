@@ -13,6 +13,7 @@ def lambda_handler(event, context):
   # number of milliseconds in a day
   table_name = 'manga_list'
 
+  print("Retrieving items from DynamoDB")
   response = dynamodb.scan(TableName = table_name)
   mangas = response['Items']
   # Keep scanning until all mangas have been retrieved
@@ -70,7 +71,8 @@ def lambda_handler(event, context):
     if len(mangas_list) == 0:
       continue
 
-    # Get the posts made in the last 6 minutes
+    print('Getting most recent posts from /r/' + subreddit)
+    # Get the most recent 20 posts
     submissions = []
     submission = requests.get(
       'https://api.pushshift.io/reddit/search/submission',
@@ -146,7 +148,10 @@ def lambda_handler(event, context):
             'msg'  : manga_name + ' Chapter ' + str(current_chapter)
           })
 
+  print('Finished going through all subreddits')
+
   if len(links) > 0:
+    print('Sending update SMS')
     # Send text that new chapter has been posted
     if os.environ.get('ENV') == 'PROD':
       text_msg = 'MANGALERT: New Chapters Have Been Posted! \n'
