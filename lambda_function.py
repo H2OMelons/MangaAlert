@@ -1,6 +1,7 @@
 import boto3
 import os
 import requests
+import time
 
 dynamodb = None
 
@@ -74,6 +75,8 @@ def lambda_handler(event, context):
     print('Getting most recent posts from /r/' + subreddit)
     # Get the most recent 20 posts
     submissions = []
+    # Get the time so we can time how long it takes to get the submissions
+    start = time.time()
     submission = requests.get(
       'https://api.pushshift.io/reddit/search/submission',
       params = {
@@ -83,6 +86,8 @@ def lambda_handler(event, context):
         'sort_type' : 'created_utc'
       }
     )
+    end = time.time()
+    print('Finished in ' + str(round(end - start, 4)) + ' seconds')
     submission = submission.json()['data']
     submissions.extend(submission)
 
