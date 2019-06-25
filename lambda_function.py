@@ -75,7 +75,7 @@ def lambda_handler(event, context):
   for submission in reddit.subreddit('manga').new(limit=15):
     if update_lambda_tag:
       update_lambda_tag = False
-      last_retrieved_time = str(submission.created_utc + 1)
+      last_retrieved_time = str(int(submission.created_utc + 1))
     tag = submission.link_flair_text
     if type(tag) == str and tag.lower() == 'disc' and submission.created_utc >= utc_time:
       disc_submissions.append(vars(submission))
