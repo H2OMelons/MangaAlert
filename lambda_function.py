@@ -90,7 +90,7 @@ def lambda_handler(event, context):
       if manga not in updated and manga in title and str(chapter + 1) in title:
         updated[manga] = chapter + 1
         links.append({
-          'url' : submission['url'],
+          'url' : 'reddit.com' + submission['permalink'],
           'msg' : manga + ' Chapter ' + str(chapter + 1)
         })
 
