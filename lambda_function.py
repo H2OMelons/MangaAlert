@@ -57,7 +57,7 @@ def lambda_handler(event, context):
 
   for manga in mangas:
     name = manga['manga_name']['S']
-    most_recent_chapter = manga['most_recent_chapter']['N']
+    most_recent_chapter = int(manga['most_recent_chapter']['N'])
     manga_dict[name] = most_recent_chapter
 
   # Dictionary where the key is the name of the manga that was updated and the
@@ -77,21 +77,22 @@ def lambda_handler(event, context):
       update_lambda_tag = False
       last_retrieved_time = str(int(submission.created_utc + 1))
     tag = submission.link_flair_text
-    if type(tag) == str and tag.lower() == 'disc' and submission.created_utc >= utc_time:
+    if type(tag) == str and tag.lower() == 'disc':
       disc_submissions.append(vars(submission))
 
   # Go through all the submissions from oldest to newest
   for i in range(len(disc_submissions) - 1, -1, -1):
     submission = disc_submissions[i]
-    # Skip the submission if it was removed
-    if 'selftext' not in submission or submission['selftext'] == '[deleted]' or not submission['is_crosspostable'] or submission['selftext'] == '[removed]':
-      continue
 
     title = submission['title'].lower()
 
     for manga, chapter in manga_dict.items():
       if manga not in updated and manga in title and str(chapter + 1) in title:
         updated[manga] = chapter + 1
+        links.append({
+          'url' : submission['url'],
+          'msg' : manga + ' Chapter ' + str(chapter + 1)
+        })
 
   if len(links) > 0:
     print('Sending update SMS')
