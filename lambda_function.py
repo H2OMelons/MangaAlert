@@ -87,7 +87,7 @@ def lambda_handler(event, context):
     title = submission['title'].lower()
 
     for manga, chapter in manga_dict.items():
-      if manga not in updated and manga in title and str(chapter + 1) in title:
+      if manga not in updated and manga in title and str(chapter + 1) in title and 'raw' not in title:
         updated[manga] = chapter + 1
         links.append({
           'url' : 'reddit.com' + submission['permalink'],
